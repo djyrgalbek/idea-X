@@ -17,17 +17,9 @@ class PostViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def search(self, request, pk=None):
-        q = request.query_params.get('q')
+        query = request.query_params.get('query')
         queryset = self.get_queryset()
-        queryset = queryset.filter(Q(title__icontains=q) |
-                                   Q(text__icontains=q))
+        queryset = queryset.filter(Q(title__icontains=query) |
+                                   Q(text__icontains=query))
         serializer = PostSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class PostImageView(generics.ListCreateAPIView):
-    queryset = PostImage.objects.all()
-    serializer_class = PostImageSerializer
-
-    def get_serializer_context(self):
-        return {'request': self.request}

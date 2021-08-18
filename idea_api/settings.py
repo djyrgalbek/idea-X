@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     #libs
     'rest_framework',
+    'rest_framework.authtoken',
 
     #apps
     'account',
@@ -135,3 +136,15 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 AUTH_USER_MODEL ='account.IdeaUser'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 't.djyrgalbek@gmail.com'
+EMAIL_HOST_PASSWORD = 'T17J01J19rn796'
+EMAIL_USE_TLS = True

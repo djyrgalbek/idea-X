@@ -1,6 +1,7 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+import hashlib
 
 
 class IdeaUserManager(BaseUserManager):
@@ -10,7 +11,7 @@ class IdeaUserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email)
         user.set_password(password)
-        # user.create_activation_code()
+        user.create_activation_code()
         user.save(using=self._db)
         return user
 
@@ -31,7 +32,7 @@ class IdeaUser(AbstractUser):
     is_active = models.BooleanField(
         default=False,
         help_text='Код активации активирован - True, нет - False')
-    activation_code = models.CharField(max_length=30, blank=True)
+    activation_code = models.CharField(max_length=100, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -41,4 +42,9 @@ class IdeaUser(AbstractUser):
     def __str__(self):
         return self.email
 
-#TODO Создать активационный код
+    def create_activation_code(self):
+        string = self.email + str(self.id)
+        encode_string = string.encode()
+        md5_object = hashlib.md5(encode_string)
+        activation_code = md5_object.hexdigest()
+        self.activation_code = activation_code

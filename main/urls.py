@@ -8,7 +8,6 @@ router = DefaultRouter()
 router.register('posts', PostViewSet)
 
 urlpatterns = [
-    path('api/categories/', CategoryListView.as_view()),
-    path('api/add-image/', PostImageView.as_view()),
-    path('api/', include(router.urls)),
+    path('categories/', CategoryListView.as_view()),
+    path('', include(router.urls)),
 ]
