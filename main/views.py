@@ -5,23 +5,22 @@ from django.utils import timezone
 from rest_framework import generics, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
+from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, DestroyModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from .serializers import *
 from .permissions import IsPostAuthor, IsOwnerOrReadOnly
 
 
-class MyPaginationClass(PageNumberPagination):
-    page_size = 6
+class PaginationClassFive(PageNumberPagination):
+    page_size = 5
 
-    def get_paginated_response(self, data):
-        for i in range(self.page_size):
-            text = data[i]['text']
-            data[i]['text'] = text[:15] + '...'
 
-        return super().get_paginated_response(data)
+class PaginationClassTen(PageNumberPagination):
+    page_size = 10
 
 
 class CategoryListView(generics.ListCreateAPIView):
@@ -29,74 +28,88 @@ class CategoryListView(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly, ]
 
-#
-# class PostViewSet(viewsets.ModelViewSet):
-#     queryset = Post.objects.all()
-#     serializer_class = PostSerializer
-#     permission_classes = [IsAuthenticated, ]
-#     pagination_class = MyPaginationClass
-#
-#     def get_serializer_context(self):
-#         return {'request': self.request}
-#
-#     def get_permissions(self):
-#         if self.action in ['update', 'partial_update', 'destroy']:
-#             permissions = [IsPostAuthor]
-#         else:
-#             permissions = [IsAuthenticated]
-#         return [permission() for permission in permissions]
-#
-#     def get_queryset(self):
-#         queryset = super().get_queryset()
-#         days_count = int(self.request.query_params.get('day', 0))
-#         print(days_count)
-#         if days_count > 0:
-#             start_date = timezone.now() - timedelta(days=days_count)
-#             print(start_date)
-#             queryset = queryset.filter(created_at__gte=start_date)
-#         return queryset
-#
-#     @action(detail=False, methods=['get'])
-#     def own(self, request, pk=None):
-#         queryset = self.get_queryset()
-#         queryset = queryset.filter(author=request.user)
-#         serializer = PostSerializer(queryset, many=True, context={'request': request})
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-#
-#
-#     @action(detail=False, methods=['get'])
-#     def search(self, request, pk=None):
-#         query = request.query_params.get('query')
-#         queryset = self.get_queryset()
-#         queryset = queryset.filter(Q(title__icontains=query) |
-#                                    Q(text__icontains=query))
-#         serializer = PostSerializer(queryset, many=True, context={'request': request})
-#         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-class PostListView(generics.ListCreateAPIView):
+class PostViewSet(ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-    pagination_class = MyPaginationClass
+    permission_classes = [IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly]
+
+    pagination_class = PaginationClassFive
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['action'] = self.action
+        return context
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        days_count = int(self.request.query_params.get('day', 0))
-        if days_count > 0:
-            start_date = timezone.now() - timedelta(days=days_count)
-            queryset = queryset.filter(created_at__gte=start_date)
+        filter = self.request.query_params.get('filter')
+        if filter == 'new':
+            news_posts = timezone.now() - timedelta(days=1)
+            queryset = queryset.filter(created_date__gte=news_posts)
+        elif filter == 'rating':
+            queryset = queryset.annotate(ratings_avg=Avg('ratings')).filter(ratings_avg__gte=7)
         return queryset
 
 
-class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
+class CommentViewSet(ListModelMixin,
+                     CreateModelMixin,
+                     RetrieveModelMixin,
+                     DestroyModelMixin,
+                     GenericViewSet):
+
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
     permission_classes = [IsAuthenticatedOrReadOnly,
                           IsOwnerOrReadOnly]
+
+    pagination_class = PaginationClassTen
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['action'] = self.action
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class RatingViewSet(ModelViewSet):
+    queryset = Rating.objects.all()
+    serializer_class = RatingSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly]
+
+    pagination_class = PaginationClassTen
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['action'] = self.action
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class LikeViewSet(ModelViewSet):
+    queryset = Like.objects.all()
+    serializer_class = LikeSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly]
+
+    pagination_class = PaginationClassTen
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['action'] = self.action
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 
 class SearchListView(generics.ListAPIView):
@@ -107,12 +120,34 @@ class SearchListView(generics.ListAPIView):
         query = self.request.query_params.get('query', None)
         # print(len(query))
         if query:
-            print('d')
             queryset = queryset.filter(Q(title__icontains=query) |
-                                       Q(text__icontains=query))
+                                       Q(text__icontains=query) |
+                                       Q(author__icontains=query))
         elif query is None:
             queryset = ''
         else:
             raise APIException('Параметр пустой')
 
         return queryset
+
+
+class FavoritesViewSet(ListModelMixin,
+                     CreateModelMixin,
+                     RetrieveModelMixin,
+                     DestroyModelMixin,
+                     GenericViewSet):
+
+    queryset = Favorites.objects.all()
+    serializer_class = FavoritesSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly]
+
+    pagination_class = PaginationClassFive
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['action'] = self.action
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
