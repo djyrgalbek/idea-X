@@ -140,8 +140,11 @@ AUTH_USER_MODEL ='account.IdeaUser'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-    ]
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 4,
 }
+
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
