@@ -37,7 +37,7 @@ class Comment(models.Model):
         ordering = ('created_date', )
 
     def __str__(self):
-        return self.comment
+        return self.post.title
 
 
 class Rating(models.Model):
@@ -46,7 +46,7 @@ class Rating(models.Model):
     grade = models.PositiveIntegerField()
 
     def __str__(self):
-        return f'Post id: {self.post.id}'
+        return self.post.title
 
 
 class Like(models.Model):
@@ -55,7 +55,7 @@ class Like(models.Model):
     status = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'Post id: {self.post.id}'
+        return self.post.title
 
 
 class Favorites(models.Model):
@@ -64,5 +64,5 @@ class Favorites(models.Model):
     name = models.CharField(max_length=50, default='Избранное')
 
     def __str__(self):
-        return f'Post id: {self.post.id}'
+        return self.post.title
 

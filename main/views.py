@@ -11,8 +11,8 @@ from .serializers import *
 from .permissions import IsOwnerOrReadOnly
 
 
-class PaginationClassFive(PageNumberPagination):
-    page_size = 5
+class PaginationClassFour(PageNumberPagination):
+    page_size = 4
 
 
 class PaginationClassTen(PageNumberPagination):
@@ -31,7 +31,7 @@ class PostViewSet(ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly,
                           IsOwnerOrReadOnly]
 
-    pagination_class = PaginationClassFive
+    pagination_class = PaginationClassFour
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -114,7 +114,7 @@ class SearchListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = Post.objects.all()
         query = self.request.query_params.get('query', None)
-        # print(len(query))
+
         if query:
             queryset = queryset.filter(Q(title__icontains=query) |
                                        Q(text__icontains=query) |
@@ -138,7 +138,7 @@ class FavoritesViewSet(ListModelMixin,
     permission_classes = [IsAuthenticatedOrReadOnly,
                           IsOwnerOrReadOnly]
 
-    pagination_class = PaginationClassFive
+    pagination_class = PaginationClassFour
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

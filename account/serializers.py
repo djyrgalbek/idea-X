@@ -79,7 +79,7 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         password = attrs.get('password')
         password_confirm = attrs.pop('password_confirm')
         if password != password_confirm:
-            raise serializers.ValidationError('Пароли не совпадают!')
+            raise serializers.ValidationError('Пароли не совпадают.')
         return attrs
 
     def save(self, **kwargs):

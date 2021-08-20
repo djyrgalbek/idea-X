@@ -7,7 +7,7 @@ def send_activation_code(email, activation_code, status=None):
         message = f"Поздравляем! Вы успешно зарегистрированы! Перейдите по ссылке для активации аккаунта: {activation_url}"
 
         send_mail(
-            'Активация аккаунта',
+            'Idea-X. Активация аккаунта',
             message,
             'admin.idea-x@gmail.com',
             [email, ],
@@ -16,7 +16,7 @@ def send_activation_code(email, activation_code, status=None):
 
     elif status == 'reset_password':
         send_mail(
-            'Сброс пароля',
+            'Idea-X. Сброс пароля',
             f'Ваш код активации: {activation_code}',
             'admin.idea-x@gmail.com',
             [email, ],

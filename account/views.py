@@ -16,10 +16,12 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            return Response("Вы зарегистрированы! Для активации аккаунта перейдите в вашу почту.", status=status.HTTP_201_CREATED)
+            return Response("Вы зарегистрированы! Для активации аккаунта перейдите в вашу почту.",
+                            status=status.HTTP_201_CREATED)
 
 
 class ActivateView(APIView):
+
     def get(self, request, activation_code):
         User = get_user_model()
         user = get_object_or_404(User, activation_code=activation_code)
