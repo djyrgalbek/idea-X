@@ -5,7 +5,7 @@ from .models import IdeaUser
 from .utils import send_activation_code
 
 
-class RegisterSerializers(serializers.ModelSerializer):
+class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(min_length=4, write_only=True)
     password_confirm = serializers.CharField(min_length=4, write_only=True)
 
@@ -25,7 +25,7 @@ class RegisterSerializers(serializers.ModelSerializer):
         email = validated_data.get('email')
         password = validated_data.get('password')
         user = IdeaUser.objects.create_user(email=email, password=password)
-        send_activation_code(email=user.email, activation_code=user.activation_code)
+        send_activation_code(email=user.email, activation_code=user.activation_code, status='register')
         return user
 
 
@@ -45,11 +45,55 @@ class LoginSerializer(serializers.Serializer):
                                 email=email, password=password)
 
             if not user:
-                message = 'Такого юзера не существует!'
+                message = 'Такого пользователя не существует.'
                 raise serializers.ValidationError(message, code='authorization')
         else:
-            message = 'Введите логин или пароль!'
+            message = 'Введите логин или пароль.'
             raise serializers.ValueError(message, code='authorization')
 
         attrs['user'] = user
         return attrs
+
+
+class CreateNewPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    activation_code = serializers.CharField(max_length=1000,
+                                            required=True)
+    password = serializers.CharField(min_length=8,
+                                     required=True)
+    password_confirm = serializers.CharField(min_length=8,
+                                     required=True)
+
+    def validate_email(self, email):
+        if not IdeaUser.objects.filter(email=email).exists():
+            raise serializers.ValidationError('Пользователь не найден.')
+        return email
+
+    def validate_activation_code(self, act_code):
+        if not IdeaUser.objects.filter(activation_code=act_code,
+                                         is_active=False).exists():
+            raise serializers.ValidationError('Неверный код активации.')
+        return act_code
+
+    def validate(self, attrs):
+        password = attrs.get('password')
+        password_confirm = attrs.pop('password_confirm')
+        if password != password_confirm:
+            raise serializers.ValidationError('Пароли не совпадают!')
+        return attrs
+
+    def save(self, **kwargs):
+        data = self.validated_data
+        email = data.get('email')
+        activation_code = data.get('activation_code')
+        password = data.get('password')
+        try:
+            user = IdeaUser.objects.get(email=email, activation_code=activation_code, is_active=False)
+        except IdeaUser.DoesNotExist:
+            raise serializers.ValidationError('Пользователь не найден.')
+
+        user.is_active = True
+        user.activation_code = ''
+        user.set_password(password)
+        user.save()
+        return user

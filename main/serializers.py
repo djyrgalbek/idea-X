@@ -75,7 +75,7 @@ class RatingSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
 
         if Rating.objects.filter(post=validated_data.get('post'), author=validated_data.get('author')):
-            raise serializers.ValidationError('Данный пользователь уже рейтнул к этому посту.')
+            raise serializers.ValidationError('Данный пользователь уже рейтнул этот пост.')
 
         rating = Rating.objects.create(
             **validated_data

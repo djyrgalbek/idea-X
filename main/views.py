@@ -1,18 +1,14 @@
 from datetime import timedelta
-
-from django.db.models import Q
 from django.utils import timezone
-from rest_framework import generics, viewsets, status
-from rest_framework.decorators import action
+from rest_framework import generics
 from rest_framework.exceptions import APIException
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, DestroyModelMixin
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
-from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from .serializers import *
-from .permissions import IsPostAuthor, IsOwnerOrReadOnly
+from .permissions import IsOwnerOrReadOnly
 
 
 class PaginationClassFive(PageNumberPagination):
@@ -126,7 +122,7 @@ class SearchListView(generics.ListAPIView):
         elif query is None:
             queryset = ''
         else:
-            raise APIException('Параметр пустой')
+            raise APIException('Параметр передан пустым.')
 
         return queryset
 
